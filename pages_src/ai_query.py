@@ -120,9 +120,19 @@ def show():
         )
 
     # Resolve which key to use
-    default_key = st.secrets.get("GEMINI_API_KEY", "")
-    api_key     = user_key.strip() if user_key.strip() else default_key
+    
+   import os
+import streamlit as st
 
+# 1. Try to get the key from Environment Variables first (Best for Cloud Run)
+# 2. If not there, try st.secrets (Best for Streamlit Cloud)
+# 3. If both fail, default to an empty string
+default_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "")
+
+# 4. Use the user-provided key if they typed one in the UI, otherwise use our default
+api_key = user_key.strip() if user_key.strip() else default_key
+
+   
     if not api_key:
         st.warning("No Gemini API key configured. Add GEMINI_API_KEY to Cloud Run environment variables.")
         return
