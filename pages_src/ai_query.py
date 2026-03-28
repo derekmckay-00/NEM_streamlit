@@ -4,6 +4,7 @@ import plotly.express as px
 import requests
 import json
 import re
+import os
 from pages_src.bq import get_client, query, table
 
 PROJECT_ID = "nem-data-491304"
@@ -119,26 +120,10 @@ def show():
             placeholder="AIza...",
         )
 
-    # Resolve which key to use
-    
-   import os
-   import streamlit as st
-
-# 1. Check the environment first (Cloud Run)
-default_key = os.environ.get("GEMINI_API_KEY")
-
-# 2. ONLY if the environment is empty, try Streamlit secrets
-   if not default_key:
-       try:
-           default_key = st.secrets.get("GEMINI_API_KEY", "")
-       except FileNotFoundError:
-           # If the file is missing (like on Cloud Run), just stay empty
-           default_key = ""
-
-# 3. Final assignment
+    # Resolve which key to use — env var first, then user input
+    default_key = os.environ.get("GEMINI_API_KEY", "")
     api_key = user_key.strip() if user_key.strip() else default_key
 
-   
     if not api_key:
         st.warning("No Gemini API key configured. Add GEMINI_API_KEY to Cloud Run environment variables.")
         return
