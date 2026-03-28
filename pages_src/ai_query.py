@@ -122,21 +122,21 @@ def show():
     # Resolve which key to use
     
    import os
-import streamlit as st
+   import streamlit as st
 
 # 1. Check the environment first (Cloud Run)
 default_key = os.environ.get("GEMINI_API_KEY")
 
 # 2. ONLY if the environment is empty, try Streamlit secrets
-if not default_key:
-    try:
-        default_key = st.secrets.get("GEMINI_API_KEY", "")
-    except FileNotFoundError:
-        # If the file is missing (like on Cloud Run), just stay empty
-        default_key = ""
+   if not default_key:
+       try:
+           default_key = st.secrets.get("GEMINI_API_KEY", "")
+       except FileNotFoundError:
+           # If the file is missing (like on Cloud Run), just stay empty
+           default_key = ""
 
 # 3. Final assignment
-api_key = user_key.strip() if user_key.strip() else default_key
+    api_key = user_key.strip() if user_key.strip() else default_key
 
    
     if not api_key:
