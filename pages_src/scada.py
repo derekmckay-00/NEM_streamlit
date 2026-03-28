@@ -84,7 +84,7 @@ def show():
         FROM {table('dispatch_unit_scada')} s
         LEFT JOIN {table('duid_reference')} r ON s.DUID = r.DUID
         WHERE s.SETTLEMENTDATE = '{latest_ts}'
-          AND s.REGIONID IN ('{region_list}')
+          AND r.REGIONID IN ('{region_list}')
           {fuel_clause}
           {duid_clause}
         ORDER BY {order_clause}
