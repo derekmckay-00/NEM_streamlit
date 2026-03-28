@@ -124,12 +124,18 @@ def show():
    import os
 import streamlit as st
 
-# 1. Try to get the key from Environment Variables first (Best for Cloud Run)
-# 2. If not there, try st.secrets (Best for Streamlit Cloud)
-# 3. If both fail, default to an empty string
-default_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "")
+# 1. Check the environment first (Cloud Run)
+default_key = os.environ.get("GEMINI_API_KEY")
 
-# 4. Use the user-provided key if they typed one in the UI, otherwise use our default
+# 2. ONLY if the environment is empty, try Streamlit secrets
+if not default_key:
+    try:
+        default_key = st.secrets.get("GEMINI_API_KEY", "")
+    except FileNotFoundError:
+        # If the file is missing (like on Cloud Run), just stay empty
+        default_key = ""
+
+# 3. Final assignment
 api_key = user_key.strip() if user_key.strip() else default_key
 
    
