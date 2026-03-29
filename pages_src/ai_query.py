@@ -11,62 +11,21 @@ PROJECT_ID = "nem-data-491304"
 DATASET    = "nem_data_store"
 
 # ── Schema context for Gemini ────────────────────────────────
-SCHEMA_CONTEXT = """
-You are a BigQuery SQL expert for the Australian National Electricity Market (NEM) database.
-The project is `nem-data-491304` and dataset is `nem_data_store`.
+SCHEMA_CONTEXT = """BigQuery SQL expert for Australian NEM (National Electricity Market).
+Project: nem-data-491304, Dataset: nem_data_store
 
-Available tables:
+Tables:
+1. dispatch_region - 5-min regional prices/demand. DATETIME SETTLEMENTDATE, STRING REGIONID (NSW1/QLD1/SA1/TAS1/VIC1), FLOAT64: RRP, RAISE6SECRRP, RAISE60SECRRP, RAISE5MINRRP, RAISEREGRRP, RAISE1SECRRP, LOWER6SECRRP, LOWER60SECRRP, LOWER5MINRRP, LOWERREGRRP, LOWER1SECRRP, TOTALDEMAND, AVAILABLEGENERATION, AVAILABLELOAD, DISPATCHABLEGENERATION, DISPATCHABLELOAD, NETINTERCHANGE. Partitioned by DATE(SETTLEMENTDATE), clustered by REGIONID.
 
-1. `nem-data-491304.nem_data_store.dispatch_region`
-   - SETTLEMENTDATE: DATETIME (NEM local time, 5-minute intervals, e.g. 2026-03-27 08:25:00)
-   - REGIONID: STRING (NSW1, QLD1, SA1, TAS1, VIC1)
-   - RRP: FLOAT64 (Regional Reference Price AUD/MWh, energy spot price)
-   - RAISE6SECRRP, RAISE60SECRRP, RAISE5MINRRP, RAISEREGRRP: FLOAT64 (Raise FCAS prices AUD/MWh)
-   - RAISE1SECRRP: FLOAT64 (1-second raise FCAS price AUD/MWh)
-   - LOWER6SECRRP, LOWER60SECRRP, LOWER5MINRRP, LOWERREGRRP: FLOAT64 (Lower FCAS prices AUD/MWh)
-   - LOWER1SECRRP: FLOAT64 (1-second lower FCAS price AUD/MWh)
-   - TOTALDEMAND: FLOAT64 (Total regional demand MW)
-   - AVAILABLEGENERATION: FLOAT64 (Available generation capacity MW)
-   - AVAILABLELOAD: FLOAT64 (Available load MW)
-   - DISPATCHABLEGENERATION: FLOAT64 (Dispatched generation MW)
-   - DISPATCHABLELOAD: FLOAT64 (Dispatched load MW)
-   - NETINTERCHANGE: FLOAT64 (Net interchange MW, positive = importing)
-   - Partitioned by DATE(SETTLEMENTDATE), clustered by REGIONID
-   - ALWAYS include WHERE SETTLEMENTDATE >= filter to use partition pruning
+2. dispatch_unit_scada - 5-min unit output. DATETIME SETTLEMENTDATE, STRING DUID, FLOAT64 SCADAVALUE (MW). Partitioned by DATE(SETTLEMENTDATE).
 
-2. `nem-data-491304.nem_data_store.dispatch_unit_scada`
-   - SETTLEMENTDATE: DATETIME (5-minute intervals)
-   - DUID: STRING (Dispatchable Unit Identifier)
-   - SCADAVALUE: FLOAT64 (Unit output MW, negative = consuming)
-   - REGIONID: STRING (NSW1, QLD1, SA1, TAS1, VIC1)
-   - Partitioned by DATE(SETTLEMENTDATE), clustered by REGIONID, DUID
-   - ALWAYS include WHERE SETTLEMENTDATE >= filter
+3. duid_reference - unit info. STRING: DUID, STATIONNAME, PARTICIPANTNAME, REGIONID, FUELSOURCEPRIMARY, TECHNOLOGYTYPE, DISPATCHTYPE. FLOAT64: REGISTEREDCAPACITY, MAXCAPACITY. No partition.
 
-3. `nem-data-491304.nem_data_store.duid_reference`
-   - DUID: STRING
-   - STATIONNAME: STRING
-   - PARTICIPANTNAME: STRING
-   - REGIONID: STRING
-   - FUELSOURCEPRIMARY: STRING (e.g. Natural Gas, Black Coal, Wind, Solar, Water, Battery Storage)
-   - FUELSOURCEDESCRIPTOR: STRING
-   - TECHNOLOGYTYPE: STRING
-   - CLASSIFICATION: STRING
-   - DISPATCHTYPE: STRING (GENERATOR or LOAD)
-   - REGISTEREDCAPACITY: FLOAT64 (MW)
-   - MAXCAPACITY: FLOAT64 (MW)
-   - No partition required on this table
-
-IMPORTANT RULES:
-- ALWAYS use partition filters: WHERE SETTLEMENTDATE >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL X DAY)
-- For "current" or "latest" data use INTERVAL 1 DAY
-- For "today" use DATE(SETTLEMENTDATE) = CURRENT_DATE()
-- Never query more than 90 days of dispatch_region or dispatch_unit_scada without aggregation
-- For large date ranges always GROUP BY and aggregate (AVG, MAX, MIN, SUM)
-- Return only the SELECT statement, no explanation, no markdown, no backticks
-- Limit raw row results to 1000 rows maximum using LIMIT
-- Use ROUND(value, 2) for price columns
-- For dispatch_unit_scada, join with duid_reference for fuel type and station name info
-"""
+Rules:
+- ALWAYS filter: WHERE SETTLEMENTDATE >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL N DAY)
+- Max 90 days without aggregation. Use GROUP BY + AVG/MAX/MIN/SUM for long ranges.
+- LIMIT 1000 on raw rows. Use ROUND(val,2) for prices.
+- Return ONLY the SELECT statement. No explanation, no markdown, no backticks."""
 
 def call_gemini(prompt, api_key):
     """Call Gemini API and return the response text."""
